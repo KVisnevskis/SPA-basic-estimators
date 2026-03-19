@@ -51,12 +51,22 @@ def synthetic_loader_case() -> dict[str, Path]:
                 "hdf5_key": ["/runs/run_train_1", "/runs/run_val_1", "/runs/run_test_1"],
             }
         )
+        scaler_parameters = pd.DataFrame(
+            {
+                "column": ["pressure", "acc_x", "acc_y", "acc_z", "phi"],
+                "min": [0.0, -10.0, -10.0, -10.0, -10.0],
+                "max": [100.0, 10.0, 10.0, 10.0, 10.0],
+                "range": [100.0, 20.0, 20.0, 20.0, 20.0],
+                "is_constant": [False, False, False, False, False],
+            }
+        )
 
         with pd.HDFStore(h5_path, mode="w") as store:
             store.put("/runs/run_train_1", _run_frame(), format="fixed")
             store.put("/runs/run_val_1", _run_frame(), format="fixed")
             store.put("/runs/run_test_1", _run_frame(), format="fixed")
             store.put("/meta/runs", meta_runs, format="fixed")
+            store.put("/meta/scaler_parameters", scaler_parameters, format="fixed")
 
         schema_doc = data_dir / "schema.md"
         schema_doc.write_text("# synthetic schema\n", encoding="utf-8")
@@ -74,6 +84,7 @@ def synthetic_loader_case() -> dict[str, Path]:
                 },
                 "meta": {
                     "runs": "/meta/runs",
+                    "scaler_parameters": "/meta/scaler_parameters",
                 },
             },
             "schema": {

@@ -16,6 +16,7 @@ from spa_basic_estimators.estimators.pressure_ridge_common import (
     build_pressure_only_dataset,
     compute_regression_metrics,
     load_pressure_ridge_config,
+    predict_all_datasets,
     save_pressure_ridge_artifacts,
 )
 from spa_basic_estimators.utils.config import load_yaml
@@ -108,6 +109,15 @@ def train_pressure_ridge_quadratic(
     )
 
     artifact_dir = estimator_config.output_dir
+    all_dataset_predictions_path = predict_all_datasets(
+        runs=runs,
+        data_config=data_config,
+        artifact_dir=artifact_dir,
+        input_columns=dataset.feature_columns,
+        predict_fn=lambda frame: final_model.predict(
+            polynomial.transform(frame[dataset.feature_columns].to_numpy(dtype=float))
+        ),
+    )
     save_pressure_ridge_artifacts(
         artifact_dir=artifact_dir,
         estimator_config=estimator_config,
@@ -121,6 +131,7 @@ def train_pressure_ridge_quadratic(
         coefficient_table=coefficient_table,
         selected_alpha=best_alpha,
         extra_pickled_artifacts={"polynomial_transformer.pkl": polynomial},
+        additional_artifact_names=[all_dataset_predictions_path.name],
         obsolete_artifacts=["input_scaler.pkl"],
     )
 
@@ -136,6 +147,7 @@ def train_pressure_ridge_quadratic(
         held_out_predictions=held_out_table,
         coefficient_table=coefficient_table,
         artifact_dir=artifact_dir,
+        all_dataset_predictions_path=all_dataset_predictions_path,
     )
 
 

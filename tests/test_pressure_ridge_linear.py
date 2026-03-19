@@ -47,6 +47,18 @@ def test_pressure_ridge_linear_smoke_run(
     assert (result.artifact_dir / "held_out_predictions.csv").exists()
     assert (result.artifact_dir / "coefficient_table.csv").exists()
     assert not (result.artifact_dir / "input_scaler.pkl").exists()
+    assert result.all_dataset_predictions_path.exists()
+
+    with pd.HDFStore(result.all_dataset_predictions_path, mode="r") as store:
+        assert set(store.keys()) == {
+            "/meta/runs",
+            "/predictions/run_test_1",
+            "/predictions/run_train_1",
+            "/predictions/run_val_1",
+        }
+        per_run = store["/predictions/run_train_1"]
+        assert {"pressure", "phi_true", "phi_prediction", "phi_error"}.issubset(per_run.columns)
+        assert abs(float(per_run["pressure"].iloc[0]) - 55.0) < 1e-9
 
 
 def test_pressure_ridge_linear_uses_prescaled_input_directly(
@@ -109,3 +121,4 @@ def test_pressure_ridge_linear_uses_prescaled_input_directly(
 
     assert abs(float(result.model.coef_[0]) - 2.0) < 1e-3
     assert abs(float(result.model.intercept_) - 1.0) < 1e-3
+    assert result.all_dataset_predictions_path.exists()
