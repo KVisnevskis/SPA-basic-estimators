@@ -1,7 +1,7 @@
 .venv/
 __pycache__/
 .pytest_cache/
-.test_artifacts/
+tests/.artifacts/
 tests/_artifacts/
 *.pyc
 *.pyo

@@ -34,7 +34,7 @@ def _write_config(path: Path, payload: dict) -> None:
 
 @pytest.fixture()
 def synthetic_loader_case() -> dict[str, Path]:
-    artifacts_root = Path(__file__).resolve().parents[1] / ".test_artifacts"
+    artifacts_root = Path(__file__).resolve().parent / ".artifacts"
     artifacts_root.mkdir(parents=True, exist_ok=True)
     project_root = artifacts_root / f"loader_case_{uuid4().hex}"
     project_root.mkdir()

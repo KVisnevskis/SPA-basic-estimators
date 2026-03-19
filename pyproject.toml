@@ -29,4 +29,4 @@ where = ["src"]
 pythonpath = ["src"]
 testpaths = ["tests"]
 addopts = "-p no:cacheprovider"
-norecursedirs = [".test_artifacts", "tests/_artifacts"]
+norecursedirs = ["tests/.artifacts", "tests/_artifacts"]
