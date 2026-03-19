@@ -8,7 +8,11 @@ version = "0.0.1"
 description = "Phase-by-phase benchmark estimator rebuild for SPA bending angle estimation"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+  "pandas>=2.2",
+  "PyYAML>=6.0",
+  "tables>=3.10",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -21,3 +25,8 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider"
+norecursedirs = [".test_artifacts", "tests/_artifacts"]
