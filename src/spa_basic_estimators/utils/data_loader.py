@@ -47,6 +47,15 @@ class ValidationConfig:
 
 
 @dataclass(frozen=True)
+class ScalerBounds:
+    column: str
+    min_value: float
+    max_value: float
+    range_value: float
+    is_constant: bool
+
+
+@dataclass(frozen=True)
 class DataConfig:
     config_path: Path
     storage: StorageConfig
@@ -174,6 +183,41 @@ def load_runs(config: DataConfig) -> dict[str, pd.DataFrame]:
                 loaded_runs[run_id] = prepared
 
     return loaded_runs
+
+
+def load_scaler_bounds(config: DataConfig) -> dict[str, ScalerBounds]:
+    scaler_key = config.storage.meta_keys.get("scaler_parameters", "/meta/scaler_parameters")
+    normalised_key = _normalise_hdf_key(scaler_key)
+
+    with pd.HDFStore(config.storage.path, mode="r") as store:
+        available_keys = set(store.keys())
+        if normalised_key not in available_keys:
+            raise KeyError(f"Scaler parameter table not found in HDF5 store: {normalised_key}")
+
+        scaler_parameters = store[normalised_key]
+
+    required_columns = ["column", "min", "max", "range", "is_constant"]
+    missing_columns = [
+        column for column in required_columns if column not in scaler_parameters.columns
+    ]
+    if missing_columns:
+        raise ValueError(
+            "Missing required columns in scaler parameter table: "
+            + ", ".join(missing_columns)
+        )
+
+    bounds_by_column: dict[str, ScalerBounds] = {}
+    for _, row in scaler_parameters.iterrows():
+        column = str(row["column"])
+        bounds_by_column[column] = ScalerBounds(
+            column=column,
+            min_value=float(row["min"]),
+            max_value=float(row["max"]),
+            range_value=float(row["range"]),
+            is_constant=bool(row["is_constant"]),
+        )
+
+    return bounds_by_column
 
 
 def _load_runs_metadata(config: DataConfig) -> dict[str, dict[str, str]]:
