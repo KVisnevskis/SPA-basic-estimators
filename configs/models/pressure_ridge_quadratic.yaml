@@ -1,0 +1,14 @@
+name: pressure_ridge_quadratic
+degree: 2
+fit_intercept: true
+alpha_grid:
+  - 1.0e-6
+  - 1.0e-5
+  - 1.0e-4
+  - 1.0e-3
+  - 1.0e-2
+  - 1.0e-1
+  - 1.0
+  - 10.0
+  - 100.0
+output_dir: outputs/pressure_ridge_quadratic
