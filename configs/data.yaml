@@ -1,6 +1,98 @@
-# Phase 1 placeholder.
-# This file will define:
-# - storage format and path
-# - required column mappings
-# - fixed run-level splits
+# Dataset configuration for the benchmark estimators.
+#
+# Source artifacts:
+# - HDF5 dataset: data/preprocessed_all_trials.h5
+# - Schema reference: data/data_schema.md
+#
+# Important note:
+# The exported dataset has already been globally min-max scaled upstream
+# for the columns listed under `conventions.scaled_columns`.
 
+storage:
+  format: hdf5
+  path: data/preprocessed_all_trials.h5
+  source_experiment_config: data/baseline_slm_lstm.yaml
+
+  runs:
+    key_pattern: /runs/<run_id>
+    meta_runs_key: /meta/runs
+
+  meta:
+    runs: /meta/runs
+    run_logs: /meta/run_logs
+    run_scaling: /meta/run_scaling
+    scaler_parameters: /meta/scaler_parameters
+    calibration: /meta/calibration
+    export_settings: /meta/export_settings
+
+schema:
+  schema_doc: data/data_schema.md
+
+  split_id_convention: normalized_hdf5_run_key
+  split_id_note: "Run IDs in the split lists must match the HDF5 run-table key suffix under /runs/."
+
+  run_id_column: run_id
+  run_key_column: hdf5_key
+
+  time_column: Time
+  target_column: phi
+
+  pressure_columns:
+    - pressure
+
+  accel_columns:
+    - acc_x
+    - acc_y
+    - acc_z
+
+  required_run_columns:
+    - pressure
+    - acc_x
+    - acc_y
+    - acc_z
+    - phi
+    - Time
+
+conventions:
+  time_units: s
+  target_units: rad
+  output_sample_rate_hz: 48.0
+
+  scaled_columns:
+    - pressure
+    - acc_x
+    - acc_y
+    - acc_z
+    - phi
+
+  scaling_note: "Global upstream min-max scaling to [-1, 1] has already been applied."
+
+splits:
+  # Mirrored from data/baseline_slm_lstm.yaml from https://github.com/KVisnevskis/SPA-LSTM-training
+  # baseline_slm_lstm.data.train_runs -> train
+  # baseline_slm_lstm.data.val_runs -> val
+  # baseline_slm_lstm.data.eval_runs -> held_out
+  train:
+    - Freehand_tt_1
+    - Freehand_static_03V_1
+    - Freehand_static_09V_1
+    - Freehand_sin_1
+    - run_0roll_0pitch_tt_1
+  val:
+    - Freehand_tt_2
+    - Freehand_static_03V_2
+    - Freehand_static_09V_2
+    - Freehand_sin_2
+    - run_0roll_0pitch_tt_2
+  held_out:
+    - run_0roll_90pitch_tt_1
+    - Freehand_tt_3
+    - Freehand_static_03V_3
+    - Freehand_static_06V_3
+    - Freehand_static_09V_3
+    - Freehand_sin_3
+
+validation:
+  fail_on_missing_columns: true
+  fail_on_missing_values: true
+  require_unique_run_ids: true
