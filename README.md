@@ -8,3 +8,6 @@ This repository implements the 6 "basic" estimators that will be used as benchma
 5. **Pressure + accelerometer minimal neural network (MLP)**
 6. **Lagged pressure + accelerometer ridge regression**
 
+The data format that the estimators and data loaders present in this repo expect an HDF5 store containing the preprocessed SPA bending datasets (source: https://github.com/KVisnevskis/SPA-data-pre-processing)
+
+The data splits for fitting the estimators is 
