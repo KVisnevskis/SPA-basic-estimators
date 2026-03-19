@@ -13,7 +13,7 @@ from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error, r2_score
 
 from spa_basic_estimators.utils.config import load_yaml, resolve_path
-from spa_basic_estimators.utils.data_loader import DataConfig
+from spa_basic_estimators.utils.data_loader import DataConfig, ScalerBounds, load_scaler_bounds
 from spa_basic_estimators.utils.splits import HDF5_KEY_COLUMN, SPLIT_COLUMN
 
 DEFAULT_ALPHA_GRID = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 10.0, 100.0]
@@ -58,6 +58,7 @@ class PressureRidgeResult:
     held_out_predictions: pd.DataFrame
     coefficient_table: pd.DataFrame
     artifact_dir: Path
+    all_dataset_predictions_path: Path
 
 
 def load_pressure_ridge_config(
@@ -151,6 +152,7 @@ def save_pressure_ridge_artifacts(
     coefficient_table: pd.DataFrame,
     selected_alpha: float,
     extra_pickled_artifacts: Mapping[str, Any] | None = None,
+    additional_artifact_names: Iterable[str] | None = None,
     obsolete_artifacts: Iterable[str] | None = None,
 ) -> None:
     artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -205,9 +207,86 @@ def save_pressure_ridge_artifacts(
         ),
         encoding="utf-8",
     )
+    if additional_artifact_names:
+        summary_path = artifact_dir / "run_summary.json"
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        summary["artifacts_saved"].extend(list(additional_artifact_names))
+        summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     shutil.copyfile(data_config.config_path, artifact_dir / data_config.config_path.name)
     shutil.copyfile(estimator_config.config_path, artifact_dir / estimator_config.config_path.name)
+
+
+def predict_all_datasets(
+    *,
+    runs: Mapping[str, pd.DataFrame],
+    data_config: DataConfig,
+    artifact_dir: Path,
+    input_columns: list[str],
+    predict_fn: Any,
+) -> Path:
+    scaler_bounds = load_scaler_bounds(data_config)
+    target_column = data_config.schema.target_column
+    missing_bounds = [
+        column for column in [*input_columns, target_column] if column not in scaler_bounds
+    ]
+    if missing_bounds:
+        raise KeyError(
+            "Missing scaler bounds for required output columns: " + ", ".join(missing_bounds)
+        )
+
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    output_path = artifact_dir / "all_dataset_predictions.h5"
+    meta_rows: list[dict[str, Any]] = []
+
+    with pd.HDFStore(output_path, mode="w") as store:
+        for run_id, frame in runs.items():
+            split_name = str(frame[SPLIT_COLUMN].iloc[0])
+            source_hdf5_key = str(frame[HDF5_KEY_COLUMN].iloc[0])
+            predictions_scaled = np.asarray(predict_fn(frame), dtype=float).reshape(-1)
+
+            prediction_frame = pd.DataFrame(
+                {
+                    data_config.schema.run_id_column: frame[data_config.schema.run_id_column].astype(str),
+                    data_config.schema.time_column: frame[data_config.schema.time_column].to_numpy(dtype=float),
+                    "split": frame[SPLIT_COLUMN].astype(str),
+                    SAMPLE_INDEX_COLUMN: frame.index.to_numpy(),
+                }
+            )
+
+            for column in input_columns:
+                prediction_frame[column] = inverse_scale_array(
+                    frame[column].to_numpy(dtype=float),
+                    scaler_bounds[column],
+                )
+
+            target_true = inverse_scale_array(
+                frame[target_column].to_numpy(dtype=float),
+                scaler_bounds[target_column],
+            )
+            target_prediction = inverse_scale_array(
+                predictions_scaled,
+                scaler_bounds[target_column],
+            )
+            prediction_frame[f"{target_column}_true"] = target_true
+            prediction_frame[f"{target_column}_prediction"] = target_prediction
+            prediction_frame[f"{target_column}_error"] = target_prediction - target_true
+
+            key = f"/predictions/{run_id}"
+            store.put(key, prediction_frame, format="fixed")
+            meta_rows.append(
+                {
+                    "run_id": run_id,
+                    "split": split_name,
+                    "source_hdf5_key": source_hdf5_key,
+                    "prediction_hdf5_key": key,
+                    "rows_saved": len(prediction_frame),
+                }
+            )
+
+        store.put("/meta/runs", pd.DataFrame(meta_rows), format="fixed")
+
+    return output_path
 
 
 def _build_split_design_matrix(
@@ -249,6 +328,15 @@ def _normalise_json_floats(payload: dict[str, float]) -> dict[str, float | None]
     for key, value in payload.items():
         normalised[key] = None if np.isnan(value) else float(value)
     return normalised
+
+
+def inverse_scale_array(values: np.ndarray, bounds: ScalerBounds) -> np.ndarray:
+    values_array = np.asarray(values, dtype=float)
+    if bounds.is_constant or bounds.range_value == 0.0:
+        return np.full_like(values_array, fill_value=bounds.min_value, dtype=float)
+
+    # Exported datasets use global min-max scaling to [-1, 1].
+    return ((values_array + 1.0) / 2.0) * bounds.range_value + bounds.min_value
 
 
 def _resolve_config_reference(
