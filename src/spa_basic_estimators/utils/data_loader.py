@@ -10,6 +10,7 @@ from spa_basic_estimators.utils.config import load_yaml, resolve_path
 from spa_basic_estimators.utils.splits import (
     HDF5_KEY_COLUMN,
     SPLIT_COLUMN,
+    UNASSIGNED_SPLIT,
     build_run_to_split_map,
     validate_splits,
 )
@@ -143,6 +144,39 @@ def load_data_config(path: str | Path) -> DataConfig:
 
 
 def load_runs(config: DataConfig) -> dict[str, pd.DataFrame]:
+    runs_metadata = _validate_and_load_runs_metadata(config)
+    run_to_split = build_run_to_split_map(
+        config.splits,
+        require_unique_run_ids=config.validation.require_unique_run_ids,
+    )
+    ordered_run_ids = [
+        run_id
+        for split_name in ("train", "val", "held_out")
+        for run_id in config.splits[split_name]
+    ]
+    return _load_selected_runs(
+        config=config,
+        runs_metadata=runs_metadata,
+        ordered_run_ids=ordered_run_ids,
+        run_to_split=run_to_split,
+    )
+
+
+def load_all_runs(config: DataConfig) -> dict[str, pd.DataFrame]:
+    runs_metadata = _validate_and_load_runs_metadata(config)
+    run_to_split = build_run_to_split_map(
+        config.splits,
+        require_unique_run_ids=config.validation.require_unique_run_ids,
+    )
+    return _load_selected_runs(
+        config=config,
+        runs_metadata=runs_metadata,
+        ordered_run_ids=list(runs_metadata),
+        run_to_split=run_to_split,
+    )
+
+
+def _validate_and_load_runs_metadata(config: DataConfig) -> dict[str, dict[str, str]]:
     if config.storage.format not in {"hdf", "hdf5"}:
         raise NotImplementedError(
             f"Phase 1C currently supports HDF5 only, not {config.storage.format!r}"
@@ -151,36 +185,41 @@ def load_runs(config: DataConfig) -> dict[str, pd.DataFrame]:
     if not config.storage.path.exists():
         raise FileNotFoundError(f"HDF5 dataset not found: {config.storage.path}")
 
-    run_to_split = build_run_to_split_map(
-        config.splits,
-        require_unique_run_ids=config.validation.require_unique_run_ids,
-    )
     runs_metadata = _load_runs_metadata(config)
 
-    missing_configured_runs = sorted(set(run_to_split) - set(runs_metadata))
+    missing_configured_runs = sorted(set(config.expected_run_ids) - set(runs_metadata))
     if missing_configured_runs:
         raise FileNotFoundError(
             "Configured split run IDs were not found in HDF5 metadata: "
             + ", ".join(missing_configured_runs)
         )
 
+    return runs_metadata
+
+
+def _load_selected_runs(
+    *,
+    config: DataConfig,
+    runs_metadata: dict[str, dict[str, str]],
+    ordered_run_ids: list[str],
+    run_to_split: dict[str, str],
+) -> dict[str, pd.DataFrame]:
     loaded_runs: dict[str, pd.DataFrame] = {}
     with pd.HDFStore(config.storage.path, mode="r") as store:
-        for split_name in ("train", "val", "held_out"):
-            for run_id in config.splits[split_name]:
-                metadata = runs_metadata[run_id]
-                frame = store[metadata["hdf5_key"]].copy()
-                prepared = _prepare_run_frame(
-                    frame=frame,
-                    config=config,
-                    run_id=run_id,
-                    split_name=split_name,
-                    hdf5_key=metadata["hdf5_key"],
-                )
+        for run_id in ordered_run_ids:
+            metadata = runs_metadata[run_id]
+            frame = store[metadata["hdf5_key"]].copy()
+            prepared = _prepare_run_frame(
+                frame=frame,
+                config=config,
+                run_id=run_id,
+                split_name=run_to_split.get(run_id, UNASSIGNED_SPLIT),
+                hdf5_key=metadata["hdf5_key"],
+            )
 
-                if run_id in loaded_runs:
-                    raise ValueError(f"Duplicate run ID loaded more than once: {run_id}")
-                loaded_runs[run_id] = prepared
+            if run_id in loaded_runs:
+                raise ValueError(f"Duplicate run ID loaded more than once: {run_id}")
+            loaded_runs[run_id] = prepared
 
     return loaded_runs
 

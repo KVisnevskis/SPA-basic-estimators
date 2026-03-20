@@ -13,7 +13,12 @@ from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error, r2_score
 
 from spa_basic_estimators.utils.config import load_yaml, resolve_path
-from spa_basic_estimators.utils.data_loader import DataConfig, ScalerBounds, load_scaler_bounds
+from spa_basic_estimators.utils.data_loader import (
+    DataConfig,
+    ScalerBounds,
+    load_all_runs,
+    load_scaler_bounds,
+)
 from spa_basic_estimators.utils.splits import HDF5_KEY_COLUMN, SPLIT_COLUMN
 
 DEFAULT_ALPHA_GRID = [1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1.0, 10.0, 100.0]
@@ -219,12 +224,12 @@ def save_pressure_ridge_artifacts(
 
 def predict_all_datasets(
     *,
-    runs: Mapping[str, pd.DataFrame],
     data_config: DataConfig,
     artifact_dir: Path,
     input_columns: list[str],
     predict_fn: Any,
 ) -> Path:
+    all_runs = load_all_runs(data_config)
     scaler_bounds = load_scaler_bounds(data_config)
     target_column = data_config.schema.target_column
     missing_bounds = [
@@ -240,7 +245,7 @@ def predict_all_datasets(
     meta_rows: list[dict[str, Any]] = []
 
     with pd.HDFStore(output_path, mode="w") as store:
-        for run_id, frame in runs.items():
+        for run_id, frame in all_runs.items():
             split_name = str(frame[SPLIT_COLUMN].iloc[0])
             source_hdf5_key = str(frame[HDF5_KEY_COLUMN].iloc[0])
             predictions_scaled = np.asarray(predict_fn(frame), dtype=float).reshape(-1)
