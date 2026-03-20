@@ -95,7 +95,6 @@ def train_pressure_ridge_linear(
 
     artifact_dir = estimator_config.output_dir
     all_dataset_predictions_path = predict_all_datasets(
-        runs=runs,
         data_config=data_config,
         artifact_dir=artifact_dir,
         input_columns=dataset.feature_columns,

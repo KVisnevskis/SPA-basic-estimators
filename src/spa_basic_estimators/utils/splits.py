@@ -5,6 +5,7 @@ from collections.abc import Mapping
 REQUIRED_SPLITS = ("train", "val", "held_out")
 SPLIT_COLUMN = "__split__"
 HDF5_KEY_COLUMN = "__hdf5_key__"
+UNASSIGNED_SPLIT = "not_in_split"
 
 
 def validate_splits(
@@ -55,4 +56,3 @@ def build_run_to_split_map(
         for split_name, run_ids in validated.items()
         for run_id in run_ids
     }
-
