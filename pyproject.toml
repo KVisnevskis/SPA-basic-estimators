@@ -9,6 +9,7 @@ description = "Phase-by-phase benchmark estimator rebuild for SPA bending angle 
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+  "matplotlib>=3.8",
   "numpy>=1.26",
   "pandas>=2.2",
   "PyYAML>=6.0",
