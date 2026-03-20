@@ -10,6 +10,7 @@ from spa_basic_estimators.estimators.pressure_ridge_linear import (
     train_pressure_ridge_linear,
 )
 from spa_basic_estimators.utils.data_loader import load_data_config, load_runs
+from spa_basic_estimators.utils.splits import UNASSIGNED_SPLIT
 
 
 def _write_model_config(path: Path, output_dir: str) -> None:
@@ -52,6 +53,7 @@ def test_pressure_ridge_linear_smoke_run(
     with pd.HDFStore(result.all_dataset_predictions_path, mode="r") as store:
         assert set(store.keys()) == {
             "/meta/runs",
+            "/predictions/run_extra_1",
             "/predictions/run_test_1",
             "/predictions/run_train_1",
             "/predictions/run_val_1",
@@ -59,6 +61,8 @@ def test_pressure_ridge_linear_smoke_run(
         per_run = store["/predictions/run_train_1"]
         assert {"pressure", "phi_true", "phi_prediction", "phi_error"}.issubset(per_run.columns)
         assert abs(float(per_run["pressure"].iloc[0]) - 55.0) < 1e-9
+        extra_run = store["/predictions/run_extra_1"]
+        assert extra_run["split"].unique().tolist() == [UNASSIGNED_SPLIT]
 
 
 def test_pressure_ridge_linear_uses_prescaled_input_directly(

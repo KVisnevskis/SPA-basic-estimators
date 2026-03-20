@@ -18,6 +18,7 @@ from spa_basic_estimators.evaluation.prediction_store import (
     load_run_frame,
 )
 from spa_basic_estimators.utils.data_loader import load_data_config, load_runs
+from spa_basic_estimators.utils.splits import UNASSIGNED_SPLIT
 
 
 def _write_model_config(path: Path, output_dir: str) -> None:
@@ -50,8 +51,8 @@ def test_prediction_store_helpers_discover_and_load_runs(
     assert stores[0].store_path == result.all_dataset_predictions_path
 
     catalog = load_run_catalog(stores[0].store_path)
-    assert catalog["run_id"].tolist() == ["run_test_1", "run_train_1", "run_val_1"]
-    assert set(catalog["split"]) == {"held_out", "train", "val"}
+    assert catalog["run_id"].tolist() == ["run_test_1", "run_extra_1", "run_train_1", "run_val_1"]
+    assert set(catalog["split"]) == {"held_out", UNASSIGNED_SPLIT, "train", "val"}
 
     run_frame = load_run_frame(stores[0].store_path, "run_val_1")
     assert {"pressure", "phi_true", "phi_prediction", "phi_error"}.issubset(run_frame.columns)
@@ -67,6 +68,9 @@ def test_prediction_store_helpers_discover_and_load_runs(
 
     expected_rmse = float((run_frame["phi_error"].pow(2).mean()) ** 0.5)
     assert compute_run_rmse(run_frame) == expected_rmse
+
+    extra_frame = load_run_frame(stores[0].store_path, "run_extra_1")
+    assert extra_frame["split"].unique().tolist() == [UNASSIGNED_SPLIT]
 
 
 def test_load_run_frame_rejects_unknown_run(synthetic_loader_case: dict[str, Path]) -> None:

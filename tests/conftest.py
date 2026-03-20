@@ -47,8 +47,13 @@ def synthetic_loader_case() -> dict[str, Path]:
         h5_path = data_dir / "synthetic_runs.h5"
         meta_runs = pd.DataFrame(
             {
-                "run_id": ["source_train", "source_val", "source_test"],
-                "hdf5_key": ["/runs/run_train_1", "/runs/run_val_1", "/runs/run_test_1"],
+                "run_id": ["source_train", "source_val", "source_test", "source_extra"],
+                "hdf5_key": [
+                    "/runs/run_train_1",
+                    "/runs/run_val_1",
+                    "/runs/run_test_1",
+                    "/runs/run_extra_1",
+                ],
             }
         )
         scaler_parameters = pd.DataFrame(
@@ -65,6 +70,7 @@ def synthetic_loader_case() -> dict[str, Path]:
             store.put("/runs/run_train_1", _run_frame(), format="fixed")
             store.put("/runs/run_val_1", _run_frame(), format="fixed")
             store.put("/runs/run_test_1", _run_frame(), format="fixed")
+            store.put("/runs/run_extra_1", _run_frame(), format="fixed")
             store.put("/meta/runs", meta_runs, format="fixed")
             store.put("/meta/scaler_parameters", scaler_parameters, format="fixed")
 

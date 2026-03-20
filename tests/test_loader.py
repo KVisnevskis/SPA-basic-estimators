@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 import yaml
 
-from spa_basic_estimators.utils.data_loader import load_data_config, load_runs
-from spa_basic_estimators.utils.splits import HDF5_KEY_COLUMN, SPLIT_COLUMN
+from spa_basic_estimators.utils.data_loader import load_all_runs, load_data_config, load_runs
+from spa_basic_estimators.utils.splits import HDF5_KEY_COLUMN, SPLIT_COLUMN, UNASSIGNED_SPLIT
 
 
 def test_load_runs_from_hdf5_assigns_split_labels(
@@ -22,6 +22,18 @@ def test_load_runs_from_hdf5_assigns_split_labels(
     assert runs["run_test_1"][SPLIT_COLUMN].unique().tolist() == ["held_out"]
     assert runs["run_train_1"][HDF5_KEY_COLUMN].unique().tolist() == ["/runs/run_train_1"]
     assert runs["run_train_1"]["run_id"].unique().tolist() == ["run_train_1"]
+
+
+def test_load_all_runs_includes_unsplit_runs(
+    synthetic_loader_case: dict[str, Path],
+) -> None:
+    config = load_data_config(synthetic_loader_case["config_path"])
+    runs = load_all_runs(config)
+
+    assert set(runs) == {"run_train_1", "run_val_1", "run_test_1", "run_extra_1"}
+    assert runs["run_extra_1"][SPLIT_COLUMN].unique().tolist() == [UNASSIGNED_SPLIT]
+    assert runs["run_extra_1"][HDF5_KEY_COLUMN].unique().tolist() == ["/runs/run_extra_1"]
+    assert runs["run_extra_1"]["run_id"].unique().tolist() == ["run_extra_1"]
 
 
 def test_load_runs_fails_on_missing_required_column(
