@@ -98,6 +98,28 @@ def build_pressure_only_dataset(
     if not feature_columns:
         raise ValueError("Pressure-only ridge requires at least one configured pressure column")
 
+    return _build_static_dataset(runs, data_config, feature_columns)
+
+
+def build_pressure_accel_dataset(
+    runs: Mapping[str, pd.DataFrame],
+    data_config: DataConfig,
+) -> PressureOnlyDataset:
+    pressure_columns = list(data_config.schema.pressure_columns)
+    accel_columns = list(data_config.schema.accel_columns)
+    if not pressure_columns:
+        raise ValueError("Pressure+accel ridge requires at least one configured pressure column")
+    if not accel_columns:
+        raise ValueError("Pressure+accel ridge requires at least one configured accelerometer column")
+
+    return _build_static_dataset(runs, data_config, pressure_columns + accel_columns)
+
+
+def _build_static_dataset(
+    runs: Mapping[str, pd.DataFrame],
+    data_config: DataConfig,
+    feature_columns: list[str],
+) -> PressureOnlyDataset:
     return PressureOnlyDataset(
         train=_build_split_design_matrix("train", runs, data_config, feature_columns),
         val=_build_split_design_matrix("val", runs, data_config, feature_columns),
