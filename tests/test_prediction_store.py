@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import yaml
 
 from spa_basic_estimators.estimators.pressure_ridge_linear import (
@@ -9,10 +10,13 @@ from spa_basic_estimators.estimators.pressure_ridge_linear import (
     train_pressure_ridge_linear,
 )
 from spa_basic_estimators.evaluation.prediction_store import (
+    ANGLE_UNIT_DEGREES,
     choose_x_axis_column,
     compute_run_rmse,
+    convert_angle_values,
     default_selected_columns,
     discover_prediction_stores,
+    is_angle_column,
     list_plottable_columns,
     load_run_catalog,
     load_run_frame,
@@ -68,6 +72,17 @@ def test_prediction_store_helpers_discover_and_load_runs(
 
     expected_rmse = float((run_frame["phi_error"].pow(2).mean()) ** 0.5)
     assert compute_run_rmse(run_frame) == expected_rmse
+    assert np.isclose(
+        compute_run_rmse(run_frame, angle_unit=ANGLE_UNIT_DEGREES),
+        float(np.rad2deg(expected_rmse)),
+    )
+    assert np.allclose(
+        convert_angle_values(run_frame["phi_true"].to_numpy(dtype=float), ANGLE_UNIT_DEGREES),
+        np.rad2deg(run_frame["phi_true"].to_numpy(dtype=float)),
+    )
+    assert is_angle_column("phi_true")
+    assert is_angle_column("phi_error")
+    assert not is_angle_column("pressure")
 
     extra_frame = load_run_frame(stores[0].store_path, "run_extra_1")
     assert extra_frame["split"].unique().tolist() == [UNASSIGNED_SPLIT]

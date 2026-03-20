@@ -11,6 +11,9 @@ DEFAULT_PREDICTION_STORE_NAME = "all_dataset_predictions.h5"
 META_RUNS_KEY = "/meta/runs"
 DEFAULT_TRUTH_COLUMN = "phi_true"
 DEFAULT_PREDICTION_COLUMN = "phi_prediction"
+ANGLE_UNIT_RADIANS = "radians"
+ANGLE_UNIT_DEGREES = "degrees"
+ANGLE_UNITS = (ANGLE_UNIT_RADIANS, ANGLE_UNIT_DEGREES)
 
 
 @dataclass(frozen=True)
@@ -114,19 +117,44 @@ def choose_x_axis_column(run_frame: pd.DataFrame) -> str:
     return plottable[0]
 
 
+def is_angle_column(column: str) -> bool:
+    normalised = str(column).strip().lower()
+    return (
+        normalised == "phi"
+        or normalised.startswith("phi_")
+        or normalised.endswith("_phi")
+    )
+
+
+def convert_angle_values(values: np.ndarray, angle_unit: str = ANGLE_UNIT_RADIANS) -> np.ndarray:
+    values_array = np.asarray(values, dtype=float)
+    if angle_unit == ANGLE_UNIT_RADIANS:
+        return values_array
+    if angle_unit == ANGLE_UNIT_DEGREES:
+        return np.rad2deg(values_array)
+    raise ValueError(f"Unsupported angle unit: {angle_unit!r}")
+
+
 def compute_run_rmse(
     run_frame: pd.DataFrame,
     *,
     truth_column: str = DEFAULT_TRUTH_COLUMN,
     prediction_column: str = DEFAULT_PREDICTION_COLUMN,
+    angle_unit: str = ANGLE_UNIT_RADIANS,
 ) -> float:
     if truth_column not in run_frame.columns:
         raise KeyError(f"Run frame is missing truth column '{truth_column}'")
     if prediction_column not in run_frame.columns:
         raise KeyError(f"Run frame is missing prediction column '{prediction_column}'")
 
-    y_true = run_frame[truth_column].to_numpy(dtype=float)
-    y_pred = run_frame[prediction_column].to_numpy(dtype=float)
+    y_true = convert_angle_values(
+        run_frame[truth_column].to_numpy(dtype=float),
+        angle_unit=angle_unit,
+    )
+    y_pred = convert_angle_values(
+        run_frame[prediction_column].to_numpy(dtype=float),
+        angle_unit=angle_unit,
+    )
     return float(np.sqrt(np.mean(np.square(y_pred - y_true))))
 
 

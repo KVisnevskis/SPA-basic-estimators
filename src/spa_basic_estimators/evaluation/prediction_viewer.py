@@ -16,11 +16,15 @@ except ImportError as exc:  # pragma: no cover - import guard for local runtime 
 import pandas as pd
 
 from spa_basic_estimators.evaluation.prediction_store import (
+    ANGLE_UNIT_RADIANS,
+    ANGLE_UNITS,
     PredictionStoreInfo,
     choose_x_axis_column,
     compute_run_rmse,
+    convert_angle_values,
     default_selected_columns,
     discover_prediction_stores,
+    is_angle_column,
     list_plottable_columns,
     load_run_catalog,
     load_run_frame,
@@ -36,6 +40,7 @@ class PredictionViewerApp:
 
         self.model_var = tk.StringVar()
         self.run_var = tk.StringVar()
+        self.angle_unit_var = tk.StringVar(value=ANGLE_UNIT_RADIANS)
         self.rmse_var = tk.StringVar(value="Run RMSE: -")
         self.split_var = tk.StringVar(value="Split: -")
         self.rows_var = tk.StringVar(value="Rows: -")
@@ -73,8 +78,19 @@ class PredictionViewerApp:
         self.run_combo.grid(row=0, column=3, sticky="ew", padx=(8, 16))
         self.run_combo.bind("<<ComboboxSelected>>", self._on_run_changed)
 
+        ttk.Label(controls, text="Angle Unit").grid(row=0, column=4, sticky="w")
+        self.angle_unit_combo = ttk.Combobox(
+            controls,
+            textvariable=self.angle_unit_var,
+            state="readonly",
+            values=list(ANGLE_UNITS),
+            width=12,
+        )
+        self.angle_unit_combo.grid(row=0, column=5, sticky="w", padx=(8, 16))
+        self.angle_unit_combo.bind("<<ComboboxSelected>>", self._on_angle_unit_changed)
+
         refresh_button = ttk.Button(controls, text="Refresh Plot", command=self.refresh_plot)
-        refresh_button.grid(row=0, column=4, sticky="e")
+        refresh_button.grid(row=0, column=6, sticky="e")
 
         controls.columnconfigure(1, weight=1)
         controls.columnconfigure(3, weight=1)
@@ -182,7 +198,11 @@ class PredictionViewerApp:
         if "split" in self.current_frame.columns and not self.current_frame["split"].empty:
             split_label = str(self.current_frame["split"].iloc[0])
 
-        self.rmse_var.set(f"Run RMSE: {compute_run_rmse(self.current_frame):.6f}")
+        angle_unit = self.angle_unit_var.get()
+        self.rmse_var.set(
+            f"Run RMSE: {compute_run_rmse(self.current_frame, angle_unit=angle_unit):.6f} "
+            f"{self._angle_unit_suffix()}"
+        )
         self.split_var.set(f"Split: {split_label}")
         self.rows_var.set(f"Rows: {len(self.current_frame)}")
         self.x_axis_var.set(f"X-axis: {choose_x_axis_column(self.current_frame)}")
@@ -215,6 +235,10 @@ class PredictionViewerApp:
     def _on_variables_changed(self, event: object | None = None) -> None:
         self.refresh_plot()
 
+    def _on_angle_unit_changed(self, event: object | None = None) -> None:
+        self._update_run_controls()
+        self.refresh_plot()
+
     def refresh_plot(self) -> None:
         if self.current_frame.empty:
             self._clear_plot("No run selected")
@@ -231,13 +255,17 @@ class PredictionViewerApp:
         self.figure.clear()
         self.axes = self.figure.add_subplot(111)
         for column in selected_columns:
-            self.axes.plot(x_values, self.current_frame[column].to_numpy(dtype=float), label=column)
+            self.axes.plot(
+                x_values,
+                self._column_values_for_plot(column),
+                label=self._plot_label(column),
+            )
 
         model_label = self.model_var.get()
         run_label = self.run_var.get()
         self.axes.set_title(f"{model_label} | {run_label}")
         self.axes.set_xlabel(x_axis_column)
-        self.axes.set_ylabel("Value")
+        self.axes.set_ylabel(f"Value (angles in {self._angle_unit_suffix()})")
         self.axes.grid(alpha=0.3)
         self.axes.legend(loc="best")
         self.figure.tight_layout()
@@ -252,6 +280,22 @@ class PredictionViewerApp:
         self.axes.grid(alpha=0.3)
         self.figure.tight_layout()
         self.canvas.draw_idle()
+
+    def _column_values_for_plot(self, column: str) -> pd.Series | list[float] | object:
+        values = self.current_frame[column].to_numpy(dtype=float)
+        if is_angle_column(column):
+            return convert_angle_values(values, self.angle_unit_var.get())
+        return values
+
+    def _plot_label(self, column: str) -> str:
+        if is_angle_column(column):
+            return f"{column} ({self._angle_unit_suffix()})"
+        return column
+
+    def _angle_unit_suffix(self) -> str:
+        if self.angle_unit_var.get() == "degrees":
+            return "deg"
+        return "rad"
 
 
 def build_parser() -> argparse.ArgumentParser:
