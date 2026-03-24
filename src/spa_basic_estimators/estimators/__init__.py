@@ -22,6 +22,13 @@ from spa_basic_estimators.estimators.lagged_pressure_accel_ridge import (
     run_lagged_pressure_accel_ridge,
     train_lagged_pressure_accel_ridge,
 )
+from spa_basic_estimators.estimators.lagged_pressure_accel_ridge_quadratic import (
+    LaggedPressureAccelRidgeQuadraticConfig,
+    LaggedPressureAccelRidgeQuadraticResult,
+    load_lagged_pressure_accel_ridge_quadratic_config,
+    run_lagged_pressure_accel_ridge_quadratic,
+    train_lagged_pressure_accel_ridge_quadratic,
+)
 from spa_basic_estimators.estimators.pressure_accel_ridge_linear import (
     PressureAccelRidgeLinearConfig,
     PressureAccelRidgeLinearResult,
@@ -58,6 +65,8 @@ __all__ = [
     "AccelRidgeQuadraticResult",
     "LaggedPressureAccelRidgeConfig",
     "LaggedPressureAccelRidgeResult",
+    "LaggedPressureAccelRidgeQuadraticConfig",
+    "LaggedPressureAccelRidgeQuadraticResult",
     "PressureAccelRidgeLinearConfig",
     "PressureAccelRidgeLinearResult",
     "PressureAccelRidgeQuadraticConfig",
@@ -70,6 +79,7 @@ __all__ = [
     "load_accel_ridge_quadratic_config",
     "build_lagged_pressure_accel_dataset",
     "load_lagged_pressure_accel_ridge_config",
+    "load_lagged_pressure_accel_ridge_quadratic_config",
     "load_pressure_accel_ridge_linear_config",
     "load_pressure_accel_ridge_quadratic_config",
     "load_pressure_ridge_linear_config",
@@ -77,6 +87,7 @@ __all__ = [
     "run_accel_ridge_linear",
     "run_accel_ridge_quadratic",
     "run_lagged_pressure_accel_ridge",
+    "run_lagged_pressure_accel_ridge_quadratic",
     "run_pressure_accel_ridge_linear",
     "run_pressure_accel_ridge_quadratic",
     "run_pressure_ridge_linear",
@@ -84,6 +95,7 @@ __all__ = [
     "train_accel_ridge_linear",
     "train_accel_ridge_quadratic",
     "train_lagged_pressure_accel_ridge",
+    "train_lagged_pressure_accel_ridge_quadratic",
     "train_pressure_accel_ridge_linear",
     "train_pressure_accel_ridge_quadratic",
     "train_pressure_ridge_linear",
