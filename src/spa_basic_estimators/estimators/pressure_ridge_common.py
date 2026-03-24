@@ -190,6 +190,7 @@ def save_pressure_ridge_artifacts(
     coefficient_table: pd.DataFrame,
     selected_alpha: float,
     extra_pickled_artifacts: Mapping[str, Any] | None = None,
+    extra_summary_fields: Mapping[str, Any] | None = None,
     additional_artifact_names: Iterable[str] | None = None,
     obsolete_artifacts: Iterable[str] | None = None,
 ) -> None:
@@ -222,27 +223,28 @@ def save_pressure_ridge_artifacts(
         json.dumps(_normalise_json_floats(held_out_metrics), indent=2),
         encoding="utf-8",
     )
+    summary_payload: dict[str, Any] = {
+        "estimator_name": estimator_config.name,
+        "selected_alpha": float(selected_alpha),
+        "fit_intercept": estimator_config.fit_intercept,
+        "feature_columns": list(coefficient_table["feature"]),
+        "data_config_path": str(data_config.config_path),
+        "model_config_path": str(estimator_config.config_path),
+        "artifacts_saved": saved_artifact_names
+        + [
+            "validation_search.csv",
+            "validation_predictions.csv",
+            "held_out_predictions.csv",
+            "coefficient_table.csv",
+            "validation_metrics.json",
+            "held_out_metrics.json",
+        ],
+    }
+    if extra_summary_fields:
+        summary_payload.update(dict(extra_summary_fields))
+
     (artifact_dir / "run_summary.json").write_text(
-        json.dumps(
-            {
-                "estimator_name": estimator_config.name,
-                "selected_alpha": float(selected_alpha),
-                "fit_intercept": estimator_config.fit_intercept,
-                "feature_columns": list(coefficient_table["feature"]),
-                "data_config_path": str(data_config.config_path),
-                "model_config_path": str(estimator_config.config_path),
-                "artifacts_saved": saved_artifact_names
-                + [
-                    "validation_search.csv",
-                    "validation_predictions.csv",
-                    "held_out_predictions.csv",
-                    "coefficient_table.csv",
-                    "validation_metrics.json",
-                    "held_out_metrics.json",
-                ],
-            },
-            indent=2,
-        ),
+        json.dumps(summary_payload, indent=2),
         encoding="utf-8",
     )
     if additional_artifact_names:
