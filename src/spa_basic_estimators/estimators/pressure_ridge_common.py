@@ -26,7 +26,7 @@ SAMPLE_INDEX_COLUMN = "sample_index"
 
 
 @dataclass(frozen=True)
-class PressureRidgeConfig:
+class RidgeModelConfig:
     config_path: Path
     name: str
     alpha_grid: list[float]
@@ -42,7 +42,7 @@ class SplitDesignMatrix:
 
 
 @dataclass(frozen=True)
-class PressureOnlyDataset:
+class DatasetMatrices:
     train: SplitDesignMatrix
     val: SplitDesignMatrix
     held_out: SplitDesignMatrix
@@ -51,8 +51,8 @@ class PressureOnlyDataset:
 
 
 @dataclass(frozen=True)
-class PressureRidgeResult:
-    config: PressureRidgeConfig
+class RidgeTrainingResult:
+    config: RidgeModelConfig
     feature_columns: list[str]
     selected_alpha: float
     model: Ridge
@@ -66,18 +66,18 @@ class PressureRidgeResult:
     all_dataset_predictions_path: Path
 
 
-def load_pressure_ridge_config(
+def load_ridge_model_config(
     path: str | Path,
     *,
     default_name: str,
     default_output_dir: str,
-) -> PressureRidgeConfig:
+) -> RidgeModelConfig:
     config_path = Path(path).resolve()
     raw = load_yaml(config_path)
     config_dir = config_path.parent
     project_root = config_dir.parent.parent
 
-    return PressureRidgeConfig(
+    return RidgeModelConfig(
         config_path=config_path,
         name=str(raw.get("name", default_name)),
         alpha_grid=[float(alpha) for alpha in raw.get("alpha_grid", DEFAULT_ALPHA_GRID)],
@@ -93,7 +93,7 @@ def load_pressure_ridge_config(
 def build_pressure_only_dataset(
     runs: Mapping[str, pd.DataFrame],
     data_config: DataConfig,
-) -> PressureOnlyDataset:
+) -> DatasetMatrices:
     feature_columns = list(data_config.schema.pressure_columns)
     if not feature_columns:
         raise ValueError("Pressure-only ridge requires at least one configured pressure column")
@@ -104,7 +104,7 @@ def build_pressure_only_dataset(
 def build_pressure_accel_dataset(
     runs: Mapping[str, pd.DataFrame],
     data_config: DataConfig,
-) -> PressureOnlyDataset:
+) -> DatasetMatrices:
     pressure_columns = list(data_config.schema.pressure_columns)
     accel_columns = list(data_config.schema.accel_columns)
     if not pressure_columns:
@@ -118,7 +118,7 @@ def build_pressure_accel_dataset(
 def build_accel_only_dataset(
     runs: Mapping[str, pd.DataFrame],
     data_config: DataConfig,
-) -> PressureOnlyDataset:
+) -> DatasetMatrices:
     accel_columns = list(data_config.schema.accel_columns)
     if not accel_columns:
         raise ValueError("Accel-only ridge requires at least one configured accelerometer column")
@@ -130,8 +130,8 @@ def _build_static_dataset(
     runs: Mapping[str, pd.DataFrame],
     data_config: DataConfig,
     feature_columns: list[str],
-) -> PressureOnlyDataset:
-    return PressureOnlyDataset(
+) -> DatasetMatrices:
+    return DatasetMatrices(
         train=_build_split_design_matrix("train", runs, data_config, feature_columns),
         val=_build_split_design_matrix("val", runs, data_config, feature_columns),
         held_out=_build_split_design_matrix("held_out", runs, data_config, feature_columns),
@@ -176,10 +176,10 @@ def compute_regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> dict[s
     }
 
 
-def save_pressure_ridge_artifacts(
+def save_ridge_artifacts(
     *,
     artifact_dir: Path,
-    estimator_config: PressureRidgeConfig,
+    estimator_config: RidgeModelConfig,
     data_config: DataConfig,
     model: Ridge,
     validation_search: pd.DataFrame,

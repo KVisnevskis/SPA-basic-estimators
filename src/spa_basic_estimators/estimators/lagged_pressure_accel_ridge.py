@@ -10,15 +10,15 @@ from sklearn.linear_model import Ridge
 
 from spa_basic_estimators.estimators.pressure_ridge_common import (
     SAMPLE_INDEX_COLUMN,
-    PressureOnlyDataset,
-    PressureRidgeConfig,
-    PressureRidgeResult,
+    DatasetMatrices,
+    RidgeModelConfig,
+    RidgeTrainingResult,
     SplitDesignMatrix,
     build_prediction_table,
     compute_regression_metrics,
     inverse_scale_array,
-    load_pressure_ridge_config,
-    save_pressure_ridge_artifacts,
+    load_ridge_model_config,
+    save_ridge_artifacts,
 )
 from spa_basic_estimators.utils.config import load_yaml
 from spa_basic_estimators.utils.data_loader import (
@@ -34,12 +34,12 @@ DEFAULT_LAG_GRID = [1, 2, 3, 5, 10, 20]
 
 
 @dataclass(frozen=True)
-class LaggedPressureAccelRidgeConfig(PressureRidgeConfig):
+class LaggedPressureAccelRidgeConfig(RidgeModelConfig):
     lag_grid: list[int]
 
 
 @dataclass(frozen=True)
-class LaggedPressureAccelRidgeResult(PressureRidgeResult):
+class LaggedPressureAccelRidgeResult(RidgeTrainingResult):
     selected_lag: int
     raw_feature_columns: list[str]
 
@@ -47,7 +47,7 @@ class LaggedPressureAccelRidgeResult(PressureRidgeResult):
 def load_lagged_pressure_accel_ridge_config(
     path: str | Path,
 ) -> LaggedPressureAccelRidgeConfig:
-    common_config = load_pressure_ridge_config(
+    common_config = load_ridge_model_config(
         path,
         default_name="lagged_pressure_accel_ridge",
         default_output_dir="outputs/lagged_pressure_accel_ridge",
@@ -74,11 +74,11 @@ def build_lagged_pressure_accel_dataset(
     runs: Mapping[str, pd.DataFrame],
     data_config: DataConfig,
     lag_length: int,
-) -> PressureOnlyDataset:
+) -> DatasetMatrices:
     raw_feature_columns = _raw_feature_columns(data_config)
     feature_columns = _lagged_feature_names(raw_feature_columns, lag_length)
 
-    return PressureOnlyDataset(
+    return DatasetMatrices(
         train=_build_lagged_split_design_matrix(
             "train",
             runs,
@@ -114,7 +114,7 @@ def train_lagged_pressure_accel_ridge(
     estimator_config: LaggedPressureAccelRidgeConfig,
 ) -> LaggedPressureAccelRidgeResult:
     raw_feature_columns = _raw_feature_columns(data_config)
-    datasets_by_lag: dict[int, PressureOnlyDataset] = {}
+    datasets_by_lag: dict[int, DatasetMatrices] = {}
 
     best_alpha: float | None = None
     best_lag: int | None = None
@@ -196,7 +196,7 @@ def train_lagged_pressure_accel_ridge(
         lag_length=best_lag,
         model=final_model,
     )
-    save_pressure_ridge_artifacts(
+    save_ridge_artifacts(
         artifact_dir=artifact_dir,
         estimator_config=estimator_config,
         data_config=data_config,

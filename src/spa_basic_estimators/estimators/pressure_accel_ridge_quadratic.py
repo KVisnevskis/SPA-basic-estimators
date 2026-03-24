@@ -10,32 +10,32 @@ from sklearn.linear_model import Ridge
 from sklearn.preprocessing import PolynomialFeatures
 
 from spa_basic_estimators.estimators.pressure_ridge_common import (
-    PressureOnlyDataset,
-    PressureRidgeConfig,
-    PressureRidgeResult,
+    DatasetMatrices,
+    RidgeModelConfig,
+    RidgeTrainingResult,
     build_prediction_table,
     build_pressure_accel_dataset as build_pressure_accel_dataset_common,
     compute_regression_metrics,
-    load_pressure_ridge_config,
+    load_ridge_model_config,
     predict_all_datasets,
-    save_pressure_ridge_artifacts,
+    save_ridge_artifacts,
 )
 from spa_basic_estimators.utils.config import load_yaml
 from spa_basic_estimators.utils.data_loader import DataConfig, load_data_config, load_runs
 
 
 @dataclass(frozen=True)
-class PressureAccelRidgeQuadraticConfig(PressureRidgeConfig):
+class PressureAccelRidgeQuadraticConfig(RidgeModelConfig):
     degree: int
 
 
-PressureAccelRidgeQuadraticResult = PressureRidgeResult
+PressureAccelRidgeQuadraticResult = RidgeTrainingResult
 
 
 def load_pressure_accel_ridge_quadratic_config(
     path: str | Path,
 ) -> PressureAccelRidgeQuadraticConfig:
-    common_config = load_pressure_ridge_config(
+    common_config = load_ridge_model_config(
         path,
         default_name="pressure_accel_ridge_quadratic",
         default_output_dir="outputs/pressure_accel_ridge_quadratic",
@@ -58,7 +58,7 @@ def load_pressure_accel_ridge_quadratic_config(
 def build_pressure_accel_dataset(
     runs: Mapping[str, pd.DataFrame],
     data_config: DataConfig,
-) -> PressureOnlyDataset:
+) -> DatasetMatrices:
     return build_pressure_accel_dataset_common(runs, data_config)
 
 
@@ -135,7 +135,7 @@ def train_pressure_accel_ridge_quadratic(
             polynomial.transform(frame[dataset.feature_columns].to_numpy(dtype=float))
         ),
     )
-    save_pressure_ridge_artifacts(
+    save_ridge_artifacts(
         artifact_dir=artifact_dir,
         estimator_config=estimator_config,
         data_config=data_config,

@@ -8,24 +8,24 @@ import pandas as pd
 from sklearn.linear_model import Ridge
 
 from spa_basic_estimators.estimators.pressure_ridge_common import (
-    PressureOnlyDataset,
-    PressureRidgeConfig,
-    PressureRidgeResult,
+    DatasetMatrices,
+    RidgeModelConfig,
+    RidgeTrainingResult,
     build_accel_only_dataset as build_accel_only_dataset_common,
     build_prediction_table,
     compute_regression_metrics,
-    load_pressure_ridge_config,
+    load_ridge_model_config,
     predict_all_datasets,
-    save_pressure_ridge_artifacts,
+    save_ridge_artifacts,
 )
 from spa_basic_estimators.utils.data_loader import DataConfig, load_data_config, load_runs
 
-AccelRidgeLinearConfig = PressureRidgeConfig
-AccelRidgeLinearResult = PressureRidgeResult
+AccelRidgeLinearConfig = RidgeModelConfig
+AccelRidgeLinearResult = RidgeTrainingResult
 
 
 def load_accel_ridge_linear_config(path: str | Path) -> AccelRidgeLinearConfig:
-    common_config = load_pressure_ridge_config(
+    common_config = load_ridge_model_config(
         path,
         default_name="accel_ridge_linear",
         default_output_dir="outputs/accel_ridge_linear",
@@ -36,7 +36,7 @@ def load_accel_ridge_linear_config(path: str | Path) -> AccelRidgeLinearConfig:
 def build_accel_only_dataset(
     runs: Mapping[str, pd.DataFrame],
     data_config: DataConfig,
-) -> PressureOnlyDataset:
+) -> DatasetMatrices:
     return build_accel_only_dataset_common(runs, data_config)
 
 
@@ -104,7 +104,7 @@ def train_accel_ridge_linear(
             frame[dataset.feature_columns].to_numpy(dtype=float)
         ),
     )
-    save_pressure_ridge_artifacts(
+    save_ridge_artifacts(
         artifact_dir=artifact_dir,
         estimator_config=estimator_config,
         data_config=data_config,
