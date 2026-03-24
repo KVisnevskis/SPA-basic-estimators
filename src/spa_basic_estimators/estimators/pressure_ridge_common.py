@@ -115,6 +115,17 @@ def build_pressure_accel_dataset(
     return _build_static_dataset(runs, data_config, pressure_columns + accel_columns)
 
 
+def build_accel_only_dataset(
+    runs: Mapping[str, pd.DataFrame],
+    data_config: DataConfig,
+) -> PressureOnlyDataset:
+    accel_columns = list(data_config.schema.accel_columns)
+    if not accel_columns:
+        raise ValueError("Accel-only ridge requires at least one configured accelerometer column")
+
+    return _build_static_dataset(runs, data_config, accel_columns)
+
+
 def _build_static_dataset(
     runs: Mapping[str, pd.DataFrame],
     data_config: DataConfig,
