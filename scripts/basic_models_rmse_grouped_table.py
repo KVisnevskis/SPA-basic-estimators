@@ -18,6 +18,7 @@ The existing color rule is preserved:
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import json
 import math
 from pathlib import Path
@@ -40,29 +41,42 @@ SECTION_ROW_LABEL: dict[str, str] = {
     "unseen": "unseen datasets",
 }
 
+EXCLUDED_MODEL_NAMES = {
+    "accel_ridge_quadratic",
+    "pressure_ridge_quadratic",
+}
+
 PREFERRED_MODEL_ORDER = [
     "accel_ridge_linear",
-    "accel_ridge_quadratic",
     "pressure_ridge_linear",
-    "pressure_ridge_quadratic",
     "pressure_accel_ridge_linear",
     "pressure_accel_ridge_quadratic",
     "lagged_pressure_accel_ridge",
     "lagged_pressure_accel_ridge_quadratic",
+    "mlp_external_best",
 ]
 
 MODEL_LABELS: dict[str, str] = {
     "accel_ridge_linear": "A-LR",
-    "accel_ridge_quadratic": "A-QR",
     "pressure_ridge_linear": "P-LR",
-    "pressure_ridge_quadratic": "P-QR",
     "pressure_accel_ridge_linear": "PA-LR",
     "pressure_accel_ridge_quadratic": "PA-QR",
     "lagged_pressure_accel_ridge": "LPA-LR",
     "lagged_pressure_accel_ridge_quadratic": "LPA-QR",
+    "mlp_external_best": "MLP",
 }
 
 RAD_TO_DEG = 180.0 / math.pi
+DEFAULT_EXTERNAL_MLP_CSV = Path("outputs/mlp_external/mlp_hpo_rmse_per_run_grouped.csv")
+
+
+@dataclass(frozen=True)
+class ModelSource:
+    model_name: str
+    display_label: str
+    source_kind: str
+    source_path: Path
+    selected_variant: str | None = None
 
 
 def _latex_escape(text: str) -> str:
@@ -91,23 +105,51 @@ def _load_json(path: Path) -> Any:
         return json.load(handle)
 
 
-def _discover_model_runs(outputs_root: Path) -> list[tuple[str, str, Path]]:
-    discovered: list[tuple[str, str, Path]] = []
+def _discover_model_sources(repo_root: Path, outputs_root: Path) -> list[ModelSource]:
+    discovered: list[ModelSource] = []
     for artifact_dir in sorted(path for path in outputs_root.iterdir() if path.is_dir()):
         store_path = artifact_dir / "all_dataset_predictions.h5"
         if not store_path.exists():
             continue
 
         model_name = _load_model_name(artifact_dir)
-        discovered.append((model_name, _model_display_label(model_name), artifact_dir))
+        if model_name in EXCLUDED_MODEL_NAMES:
+            continue
+
+        discovered.append(
+            ModelSource(
+                model_name=model_name,
+                display_label=_model_display_label(model_name),
+                source_kind="prediction_store",
+                source_path=store_path,
+            )
+        )
+
+    external_mlp_csv = repo_root / DEFAULT_EXTERNAL_MLP_CSV
+    if external_mlp_csv.exists():
+        selected_variant = _select_best_external_variant(external_mlp_csv)
+        discovered.append(
+            ModelSource(
+                model_name="mlp_external_best",
+                display_label=_model_display_label("mlp_external_best"),
+                source_kind="external_grouped_csv",
+                source_path=external_mlp_csv,
+                selected_variant=selected_variant,
+            )
+        )
 
     if not discovered:
         raise ValueError(
-            f"No model output directories with all_dataset_predictions.h5 found in {outputs_root}"
+            f"No model outputs found in {outputs_root}"
         )
 
     order_index = {model_name: index for index, model_name in enumerate(PREFERRED_MODEL_ORDER)}
-    discovered.sort(key=lambda item: (order_index.get(item[0], len(order_index)), item[1].lower()))
+    discovered.sort(
+        key=lambda item: (
+            order_index.get(item.model_name, len(order_index)),
+            item.display_label.lower(),
+        )
+    )
     return discovered
 
 
@@ -177,12 +219,82 @@ def _extract_per_run(store_path: Path) -> dict[str, tuple[str, float]]:
     return out
 
 
-def _build_rows(model_runs: list[tuple[str, str, Path]]) -> tuple[list[str], list[dict[str, Any]]]:
-    per_model: dict[str, dict[str, tuple[str, float]]] = {}
-    model_labels = [display_label for _, display_label, _ in model_runs]
+def _select_best_external_variant(csv_path: Path) -> str:
+    frame = pd.read_csv(csv_path)
+    candidate_columns = [
+        column
+        for column in frame.columns
+        if column not in {"run_name", "split_role"}
+    ]
+    if not candidate_columns:
+        raise ValueError(f"No candidate model columns found in {csv_path}")
 
-    for _, display_label, artifact_dir in model_runs:
-        per_model[display_label] = _extract_per_run(artifact_dir / "all_dataset_predictions.h5")
+    val_frame = frame[frame["split_role"].astype(str).str.strip().str.lower() == "val"]
+    if val_frame.empty:
+        raise ValueError(f"No validation rows found in {csv_path}")
+
+    ranked_candidates: list[tuple[float, str]] = []
+    for column in candidate_columns:
+        numeric = pd.to_numeric(val_frame[column], errors="coerce")
+        mean_rmse = float(numeric.mean())
+        if math.isfinite(mean_rmse):
+            ranked_candidates.append((mean_rmse, column))
+
+    if not ranked_candidates:
+        raise ValueError(f"Could not compute validation means for any MLP candidates in {csv_path}")
+
+    ranked_candidates.sort(key=lambda item: (item[0], item[1]))
+    return ranked_candidates[0][1]
+
+
+def _extract_per_run_from_external_grouped_csv(
+    csv_path: Path,
+    variant_name: str,
+) -> dict[str, tuple[str, float]]:
+    frame = pd.read_csv(csv_path)
+    required_columns = {"run_name", "split_role", variant_name}
+    missing_columns = required_columns.difference(frame.columns)
+    if missing_columns:
+        missing = ", ".join(sorted(missing_columns))
+        raise ValueError(f"Missing required columns in {csv_path}: {missing}")
+
+    out: dict[str, tuple[str, float]] = {}
+    for _, row in frame.iterrows():
+        run_name = str(row["run_name"]).strip()
+        if not run_name:
+            continue
+
+        split_role = _split_to_role(str(row["split_role"]))
+        if split_role not in SPLIT_ROLE_ORDER:
+            continue
+
+        rmse_deg = float(row[variant_name])
+        out[run_name] = (split_role, rmse_deg)
+
+    return out
+
+
+def _build_rows(model_runs: list[ModelSource]) -> tuple[list[str], list[dict[str, Any]]]:
+    per_model: dict[str, dict[str, tuple[str, float]]] = {}
+    model_labels = [model_run.display_label for model_run in model_runs]
+
+    for model_run in model_runs:
+        if model_run.source_kind == "prediction_store":
+            per_model[model_run.display_label] = _extract_per_run(model_run.source_path)
+            continue
+
+        if model_run.source_kind == "external_grouped_csv":
+            if model_run.selected_variant is None:
+                raise ValueError(
+                    f"External grouped CSV source '{model_run.source_path}' is missing a selected variant"
+                )
+            per_model[model_run.display_label] = _extract_per_run_from_external_grouped_csv(
+                model_run.source_path,
+                model_run.selected_variant,
+            )
+            continue
+
+        raise ValueError(f"Unsupported model source kind: {model_run.source_kind}")
 
     run_names = sorted({run_name for model_map in per_model.values() for run_name in model_map})
     merged_rows: list[dict[str, Any]] = []
@@ -307,7 +419,7 @@ def _render_longtable(
 
 
 def _parse_args() -> argparse.Namespace:
-    default_repo_root = Path(__file__).resolve().parent
+    default_repo_root = Path(__file__).resolve().parent.parent
     parser = argparse.ArgumentParser(
         description="Generate a grouped LaTeX table comparing RMSE across the current basic estimator models."
     )
@@ -334,13 +446,12 @@ def _parse_args() -> argparse.Namespace:
         default=(
             "Per-run RMSE [deg] across the current basic estimator models grouped by split role. "
             "Acronyms: A-LR = accelerometer-only linear ridge, "
-            "A-QR = accelerometer-only quadratic ridge, "
             "P-LR = pressure-only linear ridge, "
-            "P-QR = pressure-only quadratic ridge, "
             "PA-LR = pressure plus accelerometer linear ridge, "
             "PA-QR = pressure plus accelerometer quadratic ridge, "
             "LPA-LR = lagged pressure plus accelerometer ridge, "
-            "LPA-QR = lagged pressure plus accelerometer quadratic ridge."
+            "LPA-QR = lagged pressure plus accelerometer quadratic ridge, "
+            "MLP = externally trained multilayer perceptron selected by mean validation RMSE."
         ),
         help="LaTeX table caption.",
     )
@@ -371,7 +482,7 @@ def main() -> None:
     )
     output_path = args.output if args.output.is_absolute() else (repo_root / args.output)
 
-    model_runs = _discover_model_runs(outputs_root)
+    model_runs = _discover_model_sources(repo_root, outputs_root)
     model_labels, rows = _build_rows(model_runs)
     table_tex = _render_longtable(
         model_labels=model_labels,
@@ -386,6 +497,9 @@ def main() -> None:
     output_path.write_text(table_tex, encoding="utf-8")
     print(f"Wrote table: {output_path}")
     print(f"Model columns: {', '.join(model_labels)}")
+    for model_run in model_runs:
+        if model_run.model_name == "mlp_external_best" and model_run.selected_variant is not None:
+            print(f"External MLP column uses validation-selected variant: {model_run.selected_variant}")
     print(f"Rows: {len(rows)}")
 
 
