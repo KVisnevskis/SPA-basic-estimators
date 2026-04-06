@@ -48,20 +48,34 @@ EXCLUDED_MODEL_NAMES = {
 
 PREFERRED_MODEL_ORDER = [
     "accel_ridge_linear",
+    "accel_linear_least_squares",
     "pressure_ridge_linear",
+    "pressure_linear_least_squares",
     "pressure_accel_ridge_linear",
+    "pressure_accel_linear_least_squares",
     "pressure_accel_ridge_quadratic",
+    "lagged_pressure_ridge",
+    "lagged_accel_ridge",
     "lagged_pressure_accel_ridge",
+    "lagged_pressure_ridge_quadratic",
+    "lagged_accel_ridge_quadratic",
     "lagged_pressure_accel_ridge_quadratic",
     "mlp_external_best",
 ]
 
 MODEL_LABELS: dict[str, str] = {
     "accel_ridge_linear": "A-LR",
+    "accel_linear_least_squares": "A-LS",
     "pressure_ridge_linear": "P-LR",
+    "pressure_linear_least_squares": "P-LS",
     "pressure_accel_ridge_linear": "PA-LR",
+    "pressure_accel_linear_least_squares": "PA-LS",
     "pressure_accel_ridge_quadratic": "PA-QR",
+    "lagged_pressure_ridge": "LP-LR",
+    "lagged_accel_ridge": "LA-LR",
     "lagged_pressure_accel_ridge": "LPA-LR",
+    "lagged_pressure_ridge_quadratic": "LP-QR",
+    "lagged_accel_ridge_quadratic": "LA-QR",
     "lagged_pressure_accel_ridge_quadratic": "LPA-QR",
     "mlp_external_best": "MLP",
 }
@@ -446,10 +460,17 @@ def _parse_args() -> argparse.Namespace:
         default=(
             "Per-run RMSE [deg] across the current basic estimator models grouped by split role. "
             "Acronyms: A-LR = accelerometer-only linear ridge, "
+            "A-LS = accelerometer-only linear least squares, "
             "P-LR = pressure-only linear ridge, "
+            "P-LS = pressure-only linear least squares, "
             "PA-LR = pressure plus accelerometer linear ridge, "
+            "PA-LS = pressure plus accelerometer linear least squares, "
             "PA-QR = pressure plus accelerometer quadratic ridge, "
+            "LP-LR = lagged pressure linear ridge, "
+            "LA-LR = lagged accelerometer linear ridge, "
             "LPA-LR = lagged pressure plus accelerometer ridge, "
+            "LP-QR = lagged pressure quadratic ridge, "
+            "LA-QR = lagged accelerometer quadratic ridge, "
             "LPA-QR = lagged pressure plus accelerometer quadratic ridge, "
             "MLP = externally trained multilayer perceptron selected by mean validation RMSE."
         ),
