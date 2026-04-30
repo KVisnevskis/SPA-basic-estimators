@@ -40,7 +40,7 @@ def load_pressure_ridge_quadratic_config(path: str | Path) -> PressureRidgeQuadr
     raw = load_yaml(Path(path).resolve())
     degree = int(raw.get("degree", 2))
     if degree != 2:
-        raise ValueError("Phase 4 pressure ridge quadratic currently supports degree=2 only")
+        raise ValueError("Pressure ridge quadratic currently supports degree=2 only")
 
     return PressureRidgeQuadraticConfig(
         config_path=common_config.config_path,

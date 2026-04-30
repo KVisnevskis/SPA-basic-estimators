@@ -43,7 +43,7 @@ def load_pressure_accel_ridge_quadratic_config(
     raw = load_yaml(Path(path).resolve())
     degree = int(raw.get("degree", 2))
     if degree != 2:
-        raise ValueError("Phase 6 pressure+accel quadratic currently supports degree=2 only")
+        raise ValueError("Pressure+accel quadratic currently supports degree=2 only")
 
     return PressureAccelRidgeQuadraticConfig(
         config_path=common_config.config_path,

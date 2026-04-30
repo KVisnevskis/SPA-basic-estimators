@@ -9,7 +9,7 @@ from spa_basic_estimators.estimators.pressure_accel_ridge_linear import (
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Run the Phase 5 pressure+accelerometer linear ridge baseline."
+        description="Run the pressure+accelerometer linear ridge baseline."
     )
     parser.add_argument(
         "--data-config",

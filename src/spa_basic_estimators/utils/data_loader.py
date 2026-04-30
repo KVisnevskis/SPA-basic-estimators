@@ -179,7 +179,7 @@ def load_all_runs(config: DataConfig) -> dict[str, pd.DataFrame]:
 def _validate_and_load_runs_metadata(config: DataConfig) -> dict[str, dict[str, str]]:
     if config.storage.format not in {"hdf", "hdf5"}:
         raise NotImplementedError(
-            f"Phase 1C currently supports HDF5 only, not {config.storage.format!r}"
+            f"Only HDF5 input stores are currently supported, not {config.storage.format!r}"
         )
 
     if not config.storage.path.exists():

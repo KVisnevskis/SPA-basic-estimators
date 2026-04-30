@@ -1,0 +1,64 @@
+name: expanded_development_selected_models
+description: Selected-hyperparameter runs for the expanded-development-set study.
+data_config: configs/data.yaml
+
+models:
+  - name: accel_linear_least_squares
+    runner: spa_basic_estimators.estimators.accel_linear_least_squares.run_accel_linear_least_squares
+    model_config: configs/models_additional_sets/accel_linear_least_squares.yaml
+
+  - name: accel_ridge_linear
+    runner: spa_basic_estimators.estimators.accel_ridge_linear.run_accel_ridge_linear
+    model_config: configs/models_additional_sets/accel_ridge_linear.yaml
+
+  - name: accel_ridge_quadratic
+    runner: spa_basic_estimators.estimators.accel_ridge_quadratic.run_accel_ridge_quadratic
+    model_config: configs/models_additional_sets/accel_ridge_quadratic.yaml
+
+  - name: lagged_accel_ridge
+    runner: spa_basic_estimators.estimators.lagged_accel_ridge.run_lagged_accel_ridge
+    model_config: configs/models_additional_sets/lagged_accel_ridge.yaml
+
+  - name: lagged_accel_ridge_quadratic
+    runner: spa_basic_estimators.estimators.lagged_accel_ridge_quadratic.run_lagged_accel_ridge_quadratic
+    model_config: configs/models_additional_sets/lagged_accel_ridge_quadratic.yaml
+
+  - name: lagged_pressure_accel_ridge
+    runner: spa_basic_estimators.estimators.lagged_pressure_accel_ridge.run_lagged_pressure_accel_ridge
+    model_config: configs/models_additional_sets/lagged_pressure_accel_ridge.yaml
+
+  - name: lagged_pressure_accel_ridge_quadratic
+    runner: spa_basic_estimators.estimators.lagged_pressure_accel_ridge_quadratic.run_lagged_pressure_accel_ridge_quadratic
+    model_config: configs/models_additional_sets/lagged_pressure_accel_ridge_quadratic.yaml
+
+  - name: lagged_pressure_ridge
+    runner: spa_basic_estimators.estimators.lagged_pressure_ridge.run_lagged_pressure_ridge
+    model_config: configs/models_additional_sets/lagged_pressure_ridge.yaml
+
+  - name: lagged_pressure_ridge_quadratic
+    runner: spa_basic_estimators.estimators.lagged_pressure_ridge_quadratic.run_lagged_pressure_ridge_quadratic
+    model_config: configs/models_additional_sets/lagged_pressure_ridge_quadratic.yaml
+
+  - name: pressure_accel_linear_least_squares
+    runner: spa_basic_estimators.estimators.pressure_accel_linear_least_squares.run_pressure_accel_linear_least_squares
+    model_config: configs/models_additional_sets/pressure_accel_linear_least_squares.yaml
+
+  - name: pressure_accel_ridge_linear
+    runner: spa_basic_estimators.estimators.pressure_accel_ridge_linear.run_pressure_accel_ridge_linear
+    model_config: configs/models_additional_sets/pressure_accel_ridge_linear.yaml
+
+  - name: pressure_accel_ridge_quadratic
+    runner: spa_basic_estimators.estimators.pressure_accel_ridge_quadratic.run_pressure_accel_ridge_quadratic
+    model_config: configs/models_additional_sets/pressure_accel_ridge_quadratic.yaml
+
+  - name: pressure_linear_least_squares
+    runner: spa_basic_estimators.estimators.pressure_linear_least_squares.run_pressure_linear_least_squares
+    model_config: configs/models_additional_sets/pressure_linear_least_squares.yaml
+
+  - name: pressure_ridge_linear
+    runner: spa_basic_estimators.estimators.pressure_ridge_linear.run_pressure_ridge_linear
+    model_config: configs/models_additional_sets/pressure_ridge_linear.yaml
+
+  - name: pressure_ridge_quadratic
+    runner: spa_basic_estimators.estimators.pressure_ridge_quadratic.run_pressure_ridge_quadratic
+    model_config: configs/models_additional_sets/pressure_ridge_quadratic.yaml

@@ -1,2 +1,1 @@
-"""Training and suite orchestration will be implemented in Phase 9."""
-
+"""Command-line entry points for fitting the configured benchmark estimators."""

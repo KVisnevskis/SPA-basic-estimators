@@ -1,15 +1,7 @@
-# Dataset configuration for the benchmark estimators.
+# Dataset configuration for reproducing the original development split.
 #
-# This is the expanded-development-set split used for the final baseline study.
-# The original development split is preserved in data_original_development_split.yaml.
-#
-# Source artifacts:
-# - HDF5 dataset: data/preprocessed_all_trials.h5
-# - Schema reference: data/data_schema.md
-#
-# Important note:
-# The exported dataset has already been globally min-max scaled upstream
-# for the columns listed under `conventions.scaled_columns`.
+# This mirrors configs/data.yaml except that train/val use the original
+# 5-run development split before the expanded-development-set study.
 
 storage:
   format: hdf5
@@ -71,24 +63,18 @@ conventions:
   scaling_note: "Global upstream min-max scaling to [-1, 1] has already been applied."
 
 splits:
-  # Mirrored from data/baseline_slm_lstm.yaml from https://github.com/KVisnevskis/SPA-LSTM-training
-  # baseline_slm_lstm.data.train_runs -> train
-  # baseline_slm_lstm.data.val_runs -> val
-  # baseline_slm_lstm.data.eval_runs -> held_out
   train:
     - Freehand_tt_1
     - Freehand_static_03V_1
     - Freehand_static_09V_1
     - Freehand_sin_1
     - run_0roll_0pitch_tt_1
-    - run_180roll_45pitch_tt_1
   val:
     - Freehand_tt_2
     - Freehand_static_03V_2
     - Freehand_static_09V_2
     - Freehand_sin_2
     - run_0roll_0pitch_tt_2
-    - run_135roll_45pitch_tt_1
   held_out:
     - run_0roll_90pitch_tt_1
     - Freehand_tt_3

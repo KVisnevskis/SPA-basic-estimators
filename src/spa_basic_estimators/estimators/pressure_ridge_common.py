@@ -223,13 +223,14 @@ def save_ridge_artifacts(
         json.dumps(_normalise_json_floats(held_out_metrics), indent=2),
         encoding="utf-8",
     )
+    project_root = data_config.config_path.parent.parent
     summary_payload: dict[str, Any] = {
         "estimator_name": estimator_config.name,
         "selected_alpha": float(selected_alpha),
         "fit_intercept": estimator_config.fit_intercept,
         "feature_columns": list(coefficient_table["feature"]),
-        "data_config_path": str(data_config.config_path),
-        "model_config_path": str(estimator_config.config_path),
+        "data_config_path": _summary_path(data_config.config_path, project_root),
+        "model_config_path": _summary_path(estimator_config.config_path, project_root),
         "artifacts_saved": saved_artifact_names
         + [
             "validation_search.csv",
@@ -368,6 +369,15 @@ def _normalise_json_floats(payload: dict[str, float]) -> dict[str, float | None]
     for key, value in payload.items():
         normalised[key] = None if np.isnan(value) else float(value)
     return normalised
+
+
+def _summary_path(path: str | Path, project_root: Path) -> str:
+    resolved_path = Path(path).resolve()
+    resolved_root = project_root.resolve()
+    try:
+        return resolved_path.relative_to(resolved_root).as_posix()
+    except ValueError:
+        return str(resolved_path)
 
 
 def inverse_scale_array(values: np.ndarray, bounds: ScalerBounds) -> np.ndarray:

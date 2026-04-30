@@ -1,6 +1,16 @@
-# Phase 2 placeholder.
-# This file will define:
-# - primary evaluation metric
-# - saved output options
-# - evaluation/reporting settings
+primary_metric: rmse
+angle_units:
+  stored: radians
+  reporting: degrees
 
+outputs:
+  root: outputs
+  save_validation_predictions: true
+  save_held_out_predictions: true
+  save_all_dataset_predictions: true
+  save_coefficients: true
+  save_validation_search: true
+
+reporting:
+  grouped_rmse_table: outputs/basic_models_rmse_grouped.tex
+  error_analysis_bundle: outputs/error_analysis_bundle

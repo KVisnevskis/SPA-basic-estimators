@@ -7,7 +7,7 @@ from spa_basic_estimators.estimators.pressure_ridge_linear import run_pressure_r
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Run the Phase 3 pressure-only linear ridge baseline."
+        description="Run the pressure-only linear ridge baseline."
     )
     parser.add_argument(
         "--data-config",

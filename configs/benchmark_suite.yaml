@@ -1,8 +1,92 @@
-# Phase 9 placeholder.
-# This file will define:
-# - experiment name
-# - seed
-# - data config path
-# - evaluation config path
-# - estimator config entries
+name: basic_estimators_main
+description: Main SPA basic-estimator reproduction suite using the expanded development split.
+data_config: configs/data.yaml
 
+models:
+  - name: accel_ridge_linear
+    runner: spa_basic_estimators.estimators.accel_ridge_linear.run_accel_ridge_linear
+    model_config: configs/models/accel_ridge_linear.yaml
+
+  - name: accel_linear_least_squares
+    runner: spa_basic_estimators.estimators.accel_linear_least_squares.run_accel_linear_least_squares
+    model_config: configs/models/accel_linear_least_squares.yaml
+
+  - name: pressure_ridge_linear
+    runner: spa_basic_estimators.estimators.pressure_ridge_linear.run_pressure_ridge_linear
+    model_config: configs/models/pressure_ridge_linear.yaml
+
+  - name: pressure_linear_least_squares
+    runner: spa_basic_estimators.estimators.pressure_linear_least_squares.run_pressure_linear_least_squares
+    model_config: configs/models/pressure_linear_least_squares.yaml
+
+  - name: pressure_accel_ridge_linear
+    runner: spa_basic_estimators.estimators.pressure_accel_ridge_linear.run_pressure_accel_ridge_linear
+    model_config: configs/models/pressure_accel_ridge_linear.yaml
+
+  - name: pressure_accel_linear_least_squares
+    runner: spa_basic_estimators.estimators.pressure_accel_linear_least_squares.run_pressure_accel_linear_least_squares
+    model_config: configs/models/pressure_accel_linear_least_squares.yaml
+
+  - name: pressure_accel_ridge_quadratic
+    runner: spa_basic_estimators.estimators.pressure_accel_ridge_quadratic.run_pressure_accel_ridge_quadratic
+    model_config: configs/models/pressure_accel_ridge_quadratic.yaml
+
+  - name: lagged_pressure_ridge
+    runner: spa_basic_estimators.estimators.lagged_pressure_ridge.run_lagged_pressure_ridge
+    model_config: configs/models/lagged_pressure_ridge.yaml
+
+  - name: lagged_accel_ridge
+    runner: spa_basic_estimators.estimators.lagged_accel_ridge.run_lagged_accel_ridge
+    model_config: configs/models/lagged_accel_ridge.yaml
+
+  - name: lagged_pressure_accel_ridge
+    runner: spa_basic_estimators.estimators.lagged_pressure_accel_ridge.run_lagged_pressure_accel_ridge
+    model_config: configs/models/lagged_pressure_accel_ridge.yaml
+
+  - name: lagged_pressure_ridge_quadratic
+    runner: spa_basic_estimators.estimators.lagged_pressure_ridge_quadratic.run_lagged_pressure_ridge_quadratic
+    model_config: configs/models/lagged_pressure_ridge_quadratic.yaml
+
+  - name: lagged_accel_ridge_quadratic
+    runner: spa_basic_estimators.estimators.lagged_accel_ridge_quadratic.run_lagged_accel_ridge_quadratic
+    model_config: configs/models/lagged_accel_ridge_quadratic.yaml
+
+  - name: lagged_pressure_accel_ridge_quadratic
+    runner: spa_basic_estimators.estimators.lagged_pressure_accel_ridge_quadratic.run_lagged_pressure_accel_ridge_quadratic
+    model_config: configs/models/lagged_pressure_accel_ridge_quadratic.yaml
+
+  - name: accel_ridge_quadratic
+    runner: spa_basic_estimators.estimators.accel_ridge_quadratic.run_accel_ridge_quadratic
+    model_config: configs/models/accel_ridge_quadratic.yaml
+
+  - name: pressure_ridge_quadratic
+    runner: spa_basic_estimators.estimators.pressure_ridge_quadratic.run_pressure_ridge_quadratic
+    model_config: configs/models/pressure_ridge_quadratic.yaml
+
+  - name: accel_ridge_polynomial_search
+    runner: spa_basic_estimators.estimators.accel_ridge_polynomial_search.run_accel_ridge_polynomial_search
+    model_config: configs/models/accel_ridge_polynomial_search.yaml
+
+  - name: pressure_ridge_polynomial_search
+    runner: spa_basic_estimators.estimators.pressure_ridge_polynomial_search.run_pressure_ridge_polynomial_search
+    model_config: configs/models/pressure_ridge_polynomial_search.yaml
+
+  - name: pressure_accel_ridge_polynomial_search
+    runner: spa_basic_estimators.estimators.pressure_accel_ridge_polynomial_search.run_pressure_accel_ridge_polynomial_search
+    model_config: configs/models/pressure_accel_ridge_polynomial_search.yaml
+
+  - name: pressure_accel_ridge_polynomial_degree_2
+    runner: spa_basic_estimators.estimators.pressure_accel_ridge_polynomial_search.run_pressure_accel_ridge_polynomial_search
+    model_config: configs/models/pressure_accel_ridge_polynomial_degree_2.yaml
+
+  - name: pressure_accel_ridge_polynomial_degree_3
+    runner: spa_basic_estimators.estimators.pressure_accel_ridge_polynomial_search.run_pressure_accel_ridge_polynomial_search
+    model_config: configs/models/pressure_accel_ridge_polynomial_degree_3.yaml
+
+  - name: pressure_accel_ridge_polynomial_degree_4
+    runner: spa_basic_estimators.estimators.pressure_accel_ridge_polynomial_search.run_pressure_accel_ridge_polynomial_search
+    model_config: configs/models/pressure_accel_ridge_polynomial_degree_4.yaml
+
+  - name: pressure_accel_ridge_polynomial_degree_5
+    runner: spa_basic_estimators.estimators.pressure_accel_ridge_polynomial_search.run_pressure_accel_ridge_polynomial_search
+    model_config: configs/models/pressure_accel_ridge_polynomial_degree_5.yaml

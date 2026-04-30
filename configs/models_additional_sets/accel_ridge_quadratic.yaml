@@ -1,0 +1,6 @@
+name: accel_ridge_quadratic
+degree: 2
+fit_intercept: true
+alpha_grid:
+  - 100.0
+output_dir: outputs/additional_sets/accel_ridge_quadratic

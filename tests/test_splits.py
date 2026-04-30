@@ -28,6 +28,31 @@ def test_build_run_to_split_map_matches_repo_data_config() -> None:
         "Freehand_static_09V_1": "train",
         "Freehand_sin_1": "train",
         "run_0roll_0pitch_tt_1": "train",
+        "run_180roll_45pitch_tt_1": "train",
+        "Freehand_tt_2": "val",
+        "Freehand_static_03V_2": "val",
+        "Freehand_static_09V_2": "val",
+        "Freehand_sin_2": "val",
+        "run_0roll_0pitch_tt_2": "val",
+        "run_135roll_45pitch_tt_1": "val",
+        "run_0roll_90pitch_tt_1": "held_out",
+        "Freehand_tt_3": "held_out",
+        "Freehand_static_03V_3": "held_out",
+        "Freehand_static_06V_3": "held_out",
+        "Freehand_static_09V_3": "held_out",
+        "Freehand_sin_3": "held_out",
+    }
+
+
+def test_original_development_split_config_is_preserved() -> None:
+    config = load_data_config("configs/data_original_development_split.yaml")
+
+    assert build_run_to_split_map(config.splits) == {
+        "Freehand_tt_1": "train",
+        "Freehand_static_03V_1": "train",
+        "Freehand_static_09V_1": "train",
+        "Freehand_sin_1": "train",
+        "run_0roll_0pitch_tt_1": "train",
         "Freehand_tt_2": "val",
         "Freehand_static_03V_2": "val",
         "Freehand_static_09V_2": "val",

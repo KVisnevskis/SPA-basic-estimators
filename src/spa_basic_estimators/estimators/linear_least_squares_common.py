@@ -98,14 +98,15 @@ def save_linear_least_squares_artifacts(
         encoding="utf-8",
     )
 
+    project_root = data_config.config_path.parent.parent
     summary_payload: dict[str, Any] = {
         "estimator_name": estimator_config.name,
         "model_family": "ordinary_least_squares",
         "solver_class": "sklearn.linear_model.LinearRegression",
         "fit_intercept": estimator_config.fit_intercept,
         "feature_columns": list(coefficient_table["feature"]),
-        "data_config_path": str(data_config.config_path),
-        "model_config_path": str(estimator_config.config_path),
+        "data_config_path": _summary_path(data_config.config_path, project_root),
+        "model_config_path": _summary_path(estimator_config.config_path, project_root),
         "artifacts_saved": [
             "linear_model.pkl",
             "validation_predictions.csv",
@@ -134,6 +135,15 @@ def _normalise_json_floats(payload: Mapping[str, float]) -> dict[str, float | No
     for key, value in payload.items():
         normalised[key] = None if np.isnan(value) else float(value)
     return normalised
+
+
+def _summary_path(path: str | Path, project_root: Path) -> str:
+    resolved_path = Path(path).resolve()
+    resolved_root = project_root.resolve()
+    try:
+        return resolved_path.relative_to(resolved_root).as_posix()
+    except ValueError:
+        return str(resolved_path)
 
 
 def _resolve_config_reference(

@@ -1,0 +1,7 @@
+name: lagged_accel_ridge
+fit_intercept: true
+lag_grid:
+  - 40
+alpha_grid:
+  - 1000.0
+output_dir: outputs/additional_sets/lagged_accel_ridge

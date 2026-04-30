@@ -1,0 +1,5 @@
+name: pressure_accel_ridge_linear
+fit_intercept: true
+alpha_grid:
+  - 1.0e-8
+output_dir: outputs/additional_sets/pressure_accel_ridge_linear

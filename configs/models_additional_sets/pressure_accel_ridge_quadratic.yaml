@@ -1,0 +1,6 @@
+name: pressure_accel_ridge_quadratic
+degree: 2
+fit_intercept: true
+alpha_grid:
+  - 1.0
+output_dir: outputs/additional_sets/pressure_accel_ridge_quadratic

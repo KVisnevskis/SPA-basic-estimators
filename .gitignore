@@ -13,4 +13,6 @@ outputs/*
 !outputs/.gitkeep
 data/*
 !data/.gitkeep
+PHASE_PLAN.md
 PHASE_PLAN.MD
+tech_spec.md

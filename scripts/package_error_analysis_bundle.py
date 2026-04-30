@@ -11,6 +11,7 @@ The bundle is designed for a dedicated downstream repository that wants:
 
 from __future__ import annotations
 
+import argparse
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
@@ -215,11 +216,11 @@ def _copy_snapshot_files(artifact: ModelArtifact, snapshot_dir: Path, run_summar
 
     data_config_path = run_summary.get("data_config_path")
     if isinstance(data_config_path, str) and data_config_path.strip():
-        candidate_files.append(Path(data_config_path))
+        candidate_files.append(_summary_reference_path(data_config_path, repo_root))
 
     model_config_path = run_summary.get("model_config_path")
     if isinstance(model_config_path, str) and model_config_path.strip():
-        candidate_files.append(Path(model_config_path))
+        candidate_files.append(_summary_reference_path(model_config_path, repo_root))
 
     seen_sources: set[Path] = set()
     for source_path in candidate_files:
@@ -232,6 +233,13 @@ def _copy_snapshot_files(artifact: ModelArtifact, snapshot_dir: Path, run_summar
         copied.append(_relative_to_repo(destination_path, repo_root))
 
     return copied
+
+
+def _summary_reference_path(raw_path: str, repo_root: Path) -> Path:
+    path = Path(raw_path)
+    if path.is_absolute():
+        return path
+    return repo_root / path
 
 
 def _write_readme(
@@ -306,12 +314,51 @@ The bundle includes a fixed-degree pressure-plus-accelerometer polynomial sweep 
     readme_path.write_text(readme, encoding="utf-8")
 
 
+def _resolve_cli_path(repo_root: Path, raw_path: str) -> Path:
+    path = Path(raw_path)
+    if path.is_absolute():
+        return path
+    return (repo_root / path).resolve()
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Package model artifact directories into a consolidated error-analysis bundle."
+    )
+    parser.add_argument(
+        "--artifacts-root",
+        default="outputs",
+        help=(
+            "Directory containing per-model artifact subdirectories. "
+            "Default: outputs"
+        ),
+    )
+    parser.add_argument(
+        "--bundle-root",
+        default="outputs/error_analysis_bundle",
+        help=(
+            "Destination directory for the packaged bundle. "
+            "Default: outputs/error_analysis_bundle"
+        ),
+    )
+    parser.add_argument(
+        "--bundle-store-name",
+        default=PREDICTION_STORE_NAME,
+        help=(
+            "Filename to use for the packaged HDF5 prediction store inside the bundle. "
+            f"Default: {PREDICTION_STORE_NAME}"
+        ),
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = _parse_args()
     repo_root = _repo_root()
-    outputs_root = repo_root / "outputs"
-    bundle_root = outputs_root / "error_analysis_bundle"
+    outputs_root = _resolve_cli_path(repo_root, args.artifacts_root)
+    bundle_root = _resolve_cli_path(repo_root, args.bundle_root)
     snapshot_root = bundle_root / "source_snapshots"
-    bundle_store_path = bundle_root / PREDICTION_STORE_NAME
+    bundle_store_path = bundle_root / args.bundle_store_name
     manifest_path = bundle_root / "manifest.json"
     models_csv_path = bundle_root / "models.csv"
     runs_csv_path = bundle_root / "runs.csv"
@@ -439,6 +486,7 @@ def main() -> None:
     manifest = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "repo_root": str(repo_root.resolve()),
+        "source_artifacts_root": _relative_to_repo(outputs_root, repo_root),
         "bundle_root": _relative_to_repo(bundle_root, repo_root),
         "bundle_store_path": _relative_to_repo(bundle_store_path, repo_root),
         "included_model_count": len(artifacts),

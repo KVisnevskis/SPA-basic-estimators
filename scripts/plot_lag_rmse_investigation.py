@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Temporary plotting helper for lag-vs-RMSE investigation."""
+"""Plot lag-vs-RMSE results for lagged ridge investigation runs."""
 
 from __future__ import annotations
 

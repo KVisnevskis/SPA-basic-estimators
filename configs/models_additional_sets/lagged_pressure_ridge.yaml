@@ -1,0 +1,7 @@
+name: lagged_pressure_ridge
+fit_intercept: true
+lag_grid:
+  - 7
+alpha_grid:
+  - 100.0
+output_dir: outputs/additional_sets/lagged_pressure_ridge

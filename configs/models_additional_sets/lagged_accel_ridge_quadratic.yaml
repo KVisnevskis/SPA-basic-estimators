@@ -1,0 +1,8 @@
+name: lagged_accel_ridge_quadratic
+degree: 2
+fit_intercept: true
+lag_grid:
+  - 30
+alpha_grid:
+  - 1.0e-3
+output_dir: outputs/additional_sets/lagged_accel_ridge_quadratic

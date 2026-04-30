@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Temporary common-overlap lag investigation for lagged pressure+accel ridge."""
+"""Common-overlap lag investigation for lagged pressure+accel ridge."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ from spa_basic_estimators.utils.data_loader import load_data_config, load_runs
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Run a temporary lag sweep for the lagged pressure+accel ridge model "
+            "Run a lag sweep for the lagged pressure+accel ridge model "
             "using common-overlap evaluation samples."
         )
     )
@@ -46,7 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--output-dir",
         default="outputs/investigation/lagged_pressure_accel_ridge_common_overlap_max500",
-        help="Directory for temporary investigation outputs.",
+        help="Directory for investigation outputs.",
     )
     parser.add_argument(
         "--max-lag",
